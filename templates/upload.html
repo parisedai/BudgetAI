@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Receipt</title>
+</head>
+<body>
+    <nav>
+    <a href="/">🏠 Home</a> |
+    <a href="/upload">📸 Upload Receipt</a>
+    </nav>
+
+    <h1>Upload a Receipt</h1>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="receipt" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if ocr_text %}
+        <h2>Extracted Text from {{ filename }}:</h2>
+        <pre style="background:#f4f4f4;padding:1em;">{{ ocr_text }}</pre>
+    {% endif %}
+
+    <br>
+    <a href="/">← Back to Home</a>
+</body>
+</html>
+
