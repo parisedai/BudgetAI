@@ -1,0 +1,24 @@
+services:
+  web:
+    build: .
+    container_name: budgetai-backend
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-jn(vms9la_(7p2)xh3dzlri+mq_rrn+pr@k$*yp1h_4&&_k6z)
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DATABASE_URL=sqlite:///db.sqlite3
+    # env_file:
+    #   - .env  # Uncomment if you create a .env file
+    restart: unless-stopped
+
+volumes:
+  static_volume:
+  media_volume:
+

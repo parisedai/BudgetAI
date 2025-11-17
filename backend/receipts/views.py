@@ -15,7 +15,7 @@ def api_root(request):
     API root endpoint - lists all available endpoints
     """
     return Response({
-        'message': 'BudgetAI Backend API',
+        'message': 'SplitItUp Backend API',
         'version': '1.0',
         'endpoints': {
             'upload': {
@@ -48,8 +48,13 @@ def api_root(request):
 class UploadReceiptView(APIView):
     """
     POST /upload/
+<<<<<<< HEAD
     Accepts an image file upload, runs OCR using OpenCV and pytesseract,
+=======
+    Accepts an image file or PDF upload, runs OCR using OpenCV and pytesseract,
+>>>>>>> 87e61f2 (Rebrand to SplitItUp and add modern frontend with OCR support)
     and returns JSON { raw_text, total_amount }
+    Supports: JPG, PNG, GIF, PDF
     """
     parser_classes = [MultiPartParser, FormParser]
 
