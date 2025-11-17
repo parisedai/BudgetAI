@@ -6,12 +6,49 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from decimal import Decimal
 from .models import Receipt
 from .serializers import ReceiptSerializer, UploadResponseSerializer, SplitRequestSerializer, SplitResponseSerializer
+from .ocr import process_receipt_image
+
+
+@api_view(['GET'])
+def api_root(request):
+    """
+    API root endpoint - lists all available endpoints
+    """
+    return Response({
+        'message': 'BudgetAI Backend API',
+        'version': '1.0',
+        'endpoints': {
+            'upload': {
+                'url': '/upload/',
+                'method': 'POST',
+                'description': 'Upload a receipt image for OCR processing',
+                'example': 'curl -X POST http://localhost:8000/upload/ -F "file=@receipt.jpg"'
+            },
+            'split': {
+                'url': '/split/',
+                'method': 'POST',
+                'description': 'Split expenses between people',
+                'example': 'curl -X POST http://localhost:8000/split/ -H "Content-Type: application/json" -d \'{"items": [{"amount": "25.50"}], "people": ["Alice", "Bob"]}\''
+            },
+            'receipts': {
+                'url': '/receipts/',
+                'method': 'GET',
+                'description': 'Get list of all receipts',
+                'example': 'curl http://localhost:8000/receipts/'
+            },
+            'admin': {
+                'url': '/admin/',
+                'method': 'GET',
+                'description': 'Django admin interface'
+            }
+        }
+    })
 
 
 class UploadReceiptView(APIView):
     """
     POST /upload/
-    Accepts an image file upload, runs placeholder OCR logic,
+    Accepts an image file upload, runs OCR using OpenCV and pytesseract,
     and returns JSON { raw_text, total_amount }
     """
     parser_classes = [MultiPartParser, FormParser]
@@ -25,32 +62,26 @@ class UploadReceiptView(APIView):
 
         file = request.FILES['file']
         
-        # Placeholder OCR logic - return static text and dummy amount
-        # In production, this would use actual OCR (e.g., pytesseract, Google Vision API)
-        raw_text = """WALMART
-Store #1234
-Date: 11/16/2024
-Time: 14:30
-
-Items:
-1. Milk - $3.99
-2. Bread - $2.49
-3. Eggs - $4.99
-4. Chicken - $8.99
-5. Apples - $5.99
-
-Subtotal: $26.45
-Tax: $2.12
-Total: $28.57"""
+        try:
+            # Process image with OCR
+            raw_text, total_amount = process_receipt_image(file)
+            
+            # If total_amount is None, set a default or handle error
+            if total_amount is None:
+                total_amount = Decimal('0.00')
+            
+            serializer = UploadResponseSerializer({
+                'raw_text': raw_text,
+                'total_amount': total_amount
+            })
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
         
-        total_amount = Decimal('28.57')
-        
-        serializer = UploadResponseSerializer({
-            'raw_text': raw_text,
-            'total_amount': total_amount
-        })
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'OCR processing failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SplitExpenseView(APIView):
